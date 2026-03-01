@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Flame Tree Estate Hotel | Room & Housekeeping Management</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="housekeeping.css" />
+</head>
+<body>
+  <div class="container">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Room & Housekeeping Management</p>
+        <h1>The Flame Tree Estate Hotel</h1>
+        <p class="subtitle">Manage room status, assign housekeeping work, and track cleanliness plus linen/consumable usage.</p>
+      </div>
+      <a class="back-link" href="../User_Management/index.html">Back to Login</a>
+    </header>
+
+    <main class="layout">
+      <section class="panel full-width">
+        <h2>Housekeeping Overview</h2>
+        <div class="summary-grid">
+          <article class="summary-card">
+            <h3>Total Tasks</h3>
+            <p class="metric" id="totalTasksMetric">0</p>
+            <p>All housekeeping tasks in the system.</p>
+          </article>
+          <article class="summary-card">
+            <h3>Assigned</h3>
+            <p class="metric" id="assignedMetric">0</p>
+            <p>Tasks awaiting completion.</p>
+          </article>
+          <article class="summary-card">
+            <h3>In Progress</h3>
+            <p class="metric" id="inProgressMetric">0</p>
+            <p>Tasks being handled now.</p>
+          </article>
+          <article class="summary-card">
+            <h3>Completed</h3>
+            <p class="metric" id="completedMetric">0</p>
+            <p>Finished tasks.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="panel full-width">
+        <h2>Manage Tasks</h2>
+        <div class="table-actions">
+          <button type="button" id="openAddDialogBtn">Add Task</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Request ID</th>
+                <th>Room</th>
+                <th>Request Type</th>
+                <th>Assigned Staff</th>
+                <th>Task Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="tasksTableBody"></tbody>
+          </table>
+        </div>
+        <p id="taskMessage" aria-live="polite"></p>
+      </section>
+    </main>
+  </div>
+
+  <dialog id="addTaskDialog" class="task-dialog">
+    <form class="form" id="addTaskForm" method="dialog">
+      <h3>Add Housekeeping Task</h3>
+
+      <label for="requestId">Request ID</label>
+      <input id="requestId" type="text" placeholder="e.g., HK-2026-031" required />
+
+      <label for="roomNo">Room Number</label>
+      <input id="roomNo" type="text" placeholder="e.g., 305" required />
+
+      <label for="requestType">Request Type</label>
+      <select id="requestType" required>
+        <option value="">Select request type</option>
+        <option>Room Cleaning</option>
+        <option>Extra Linen</option>
+        <option>Toiletries Refill</option>
+        <option>Turn-down Service</option>
+        <option>Other Assistance</option>
+      </select>
+
+      <label for="staffName">Assigned Staff</label>
+      <input id="staffName" type="text" placeholder="Housekeeping staff name" required />
+
+      <label for="taskStatus">Task Status</label>
+      <select id="taskStatus" required>
+        <option>Assigned</option>
+        <option>In Progress</option>
+        <option>Completed</option>
+      </select>
+
+      <div class="dialog-actions">
+        <button type="button" class="secondary-btn" id="cancelAddDialogBtn">Cancel</button>
+        <button type="submit">Add Task</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="updateTaskDialog" class="task-dialog">
+    <form class="form" id="updateTaskForm" method="dialog">
+      <h3>Update Housekeeping Task</h3>
+
+      <input id="updateTaskDbId" type="hidden" />
+
+      <label for="updateRequestId">Request ID</label>
+      <input id="updateRequestId" type="text" required />
+
+      <label for="updateRoomNo">Room Number</label>
+      <input id="updateRoomNo" type="text" required />
+
+      <label for="updateRequestType">Request Type</label>
+      <select id="updateRequestType" required>
+        <option value="">Select request type</option>
+        <option>Room Cleaning</option>
+        <option>Extra Linen</option>
+        <option>Toiletries Refill</option>
+        <option>Turn-down Service</option>
+        <option>Other Assistance</option>
+      </select>
+
+      <label for="updateStaffName">Assigned Staff</label>
+      <input id="updateStaffName" type="text" required />
+
+      <label for="updateTaskStatus">Task Status</label>
+      <select id="updateTaskStatus" required>
+        <option>Assigned</option>
+        <option>In Progress</option>
+        <option>Completed</option>
+      </select>
+
+      <div class="dialog-actions">
+        <button type="button" class="secondary-btn" id="cancelUpdateDialogBtn">Cancel</button>
+        <button type="submit">Save Changes</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="housekeeping.js"></script>
+</body>
+</html>
