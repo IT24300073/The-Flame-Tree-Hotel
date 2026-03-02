@@ -1,4 +1,4 @@
-package project.flametreehotel.Controllers;
+package project.hotel.Controllers;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
