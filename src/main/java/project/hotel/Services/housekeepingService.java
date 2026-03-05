@@ -1,12 +1,12 @@
-package project.hotel.Services;
+package project.flametreehotel.Services;
 
 import java.util.List;
 
 import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;
-import project.hotel.Model.housekeeping;
-import project.hotel.Repository.housekeepingRepository;
+import project.flametreehotel.Model.housekeeping;
+import project.flametreehotel.Repository.housekeepingRepository;
 
 @Service
 @RequiredArgsConstructor
@@ -29,6 +29,7 @@ public class housekeepingService {
         task.setRequestType(requestType);
         task.setAssignedStaff(assignedStaff);
         task.setTaskStatus(taskStatus);
+        task.setApproved(false);
 
         return repository.save(task);
     }
@@ -42,7 +43,20 @@ public class housekeepingService {
         existing.setRequestType(requestType);
         existing.setAssignedStaff(assignedStaff);
         existing.setTaskStatus(taskStatus);
+        existing.setApproved(false);
 
+        return repository.save(existing);
+    }
+
+    public housekeeping setApproval(int id, boolean approved) {
+        housekeeping existing = repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Task not found."));
+
+        if (!"Completed".equalsIgnoreCase(existing.getTaskStatus())) {
+            throw new RuntimeException("Only completed tasks can be approved.");
+        }
+
+        existing.setApproved(approved);
         return repository.save(existing);
     }
 

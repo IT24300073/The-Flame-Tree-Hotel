@@ -1,4 +1,4 @@
-package project.hotel.Controllers;
+package project.flametreehotel.Controllers;
 
 import java.util.HashMap;
 import java.util.List;
@@ -12,8 +12,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import lombok.RequiredArgsConstructor;
-import project.hotel.Model.housekeeping;
-import project.hotel.Services.housekeepingService;
+import project.flametreehotel.Model.housekeeping;
+import project.flametreehotel.Services.housekeepingService;
 
 @RestController
 @RequestMapping("/housekeeping")
@@ -99,6 +99,44 @@ public class housekeepingController {
             housekeeping updated = service.updateTask(id, requestId.trim(), room.trim(), requestType, assignedStaff.trim(), taskStatus);
             response.put("success", true);
             response.put("message", "Updated task " + updated.getRequestId() + ".");
+            response.put("task", updated);
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            response.put("success", false);
+            response.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
+    /**
+     * POST /housekeeping/approve
+     * Body: { "id": 1, "approved": true, "role": "Manager" }
+     */
+    @PostMapping("/approve")
+    public ResponseEntity<Map<String, Object>> approveHousekeeping(@RequestBody Map<String, Object> body) {
+        Map<String, Object> response = new HashMap<>();
+
+        if (body.get("id") == null || body.get("approved") == null) {
+            response.put("success", false);
+            response.put("message", "Task ID and approved value are required.");
+            return ResponseEntity.badRequest().body(response);
+        }
+
+        String role = String.valueOf(body.getOrDefault("role", "")).trim();
+        boolean allowed = "Manager".equalsIgnoreCase(role) || "Staff Supervisor".equalsIgnoreCase(role);
+        if (!allowed) {
+            response.put("success", false);
+            response.put("message", "Only manager or supervisor can approve tasks.");
+            return ResponseEntity.status(403).body(response);
+        }
+
+        int id = ((Number) body.get("id")).intValue();
+        boolean approved = Boolean.parseBoolean(String.valueOf(body.get("approved")));
+
+        try {
+            housekeeping updated = service.setApproval(id, approved);
+            response.put("success", true);
+            response.put("message", "Task " + updated.getRequestId() + (approved ? " approved." : " unapproved."));
             response.put("task", updated);
             return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
