@@ -3,24 +3,23 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>The Flame Tree Estate Hotel | Manager Dashboard</title>
+  <title>The Flame Tree Estate Hotel | Supervisor Dashboard</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="manager-dashboard.css" />
+  <link rel="stylesheet" href="supervisor-dashboard.css" />
 </head>
 <body>
   <div class="shell">
     <aside class="sidebar">
       <div class="brand-block">
-        <p class="eyebrow">Manager Console</p>
+        <p class="eyebrow">Supervisor Console</p>
         <h1>The Flame Tree Estate Hotel</h1>
-        <p class="subtext">Oversee all staff functions and hotel operations from one place.</p>
+        <p class="subtext">Monitor all hotel operations and module activities.</p>
       </div>
 
-      <nav class="side-nav" aria-label="Manager navigation">
+      <nav class="side-nav" aria-label="Supervisor navigation">
         <a href="#overview">Overview</a>
-        <a href="#access-control">User Access Control</a>
         <a href="#guest-services">Guest Services</a>
         <a href="#housekeeping">Housekeeping</a>
         <a href="#inventory">Inventory</a>
@@ -42,77 +41,8 @@
         </div>
       </section>
 
-      <section class="panel" id="access-control">
-        <h2>User Access Control (Manager Core)</h2>
-        <div class="two-col">
-          <form class="form" id="createUserForm">
-            <h3>Create User Account</h3>
-            <label for="newUsername">Username</label>
-            <input id="newUsername" type="text" placeholder="first.last" required />
-            <label for="newEmail">Staff Email</label>
-            <input id="newEmail" type="email" placeholder="name@flametreehotel.local" required />
-            <label for="tempPassword">Temporary Password</label>
-            <input id="tempPassword" type="password" placeholder="••••••••" required />
-            <label for="newRole">Role</label>
-            <select id="newRole" required>
-              <option value="">Choose role</option>
-              <option value="Manager">Manager</option>
-              <option value="Housekeeping Staff">Housekeeping Staff</option>
-              <option value="Inventory/Store Manager">Inventory/Store Manager</option>
-              <option value="Maintenance Staff">Maintenance Staff</option>
-              <option value="Staff Supervisor">Staff Supervisor</option>
-              <option value="Front Desk / Reception Staff">Front Desk / Reception Staff</option>
-              <option value="Supplier &amp; Purchase Management">Supplier &amp; Purchase Management</option>
-            </select>
-            <p class="form-msg" id="createMsg"></p>
-            <button type="submit">Create Account</button>
-          </form>
-
-          <form class="form" id="assignRoleForm">
-            <h3>Assign Role &amp; Permissions</h3>
-            <label for="staffUser">Select User</label>
-            <input id="staffUser" type="text" placeholder="Search by username" list="usernames-list" required />
-            <datalist id="usernames-list"></datalist>
-            <label for="role">Role</label>
-            <select id="role" required>
-              <option value="">Choose role</option>
-              <option value="Manager">Manager</option>
-              <option value="Housekeeping Staff">Housekeeping Staff</option>
-              <option value="Inventory/Store Manager">Inventory/Store Manager</option>
-              <option value="Maintenance Staff">Maintenance Staff</option>
-              <option value="Staff Supervisor">Staff Supervisor</option>
-              <option value="Front Desk / Reception Staff">Front Desk / Reception Staff</option>
-              <option value="Supplier &amp; Purchase Management">Supplier &amp; Purchase Management</option>
-            </select>
-            <p class="form-msg" id="assignMsg"></p>
-            <button type="submit">Assign Role</button>
-          </form>
-        </div>
-
-        <form class="form form-inline" id="statusForm">
-          <h3>Manage Account Status</h3>
-          <label for="deactivateUser">Username</label>
-          <input id="deactivateUser" type="text" placeholder="Enter username" list="usernames-list" required />
-          <label for="reason">Reason (optional note)</label>
-          <textarea id="reason" rows="2" placeholder="Reason for status change"></textarea>
-          <p class="form-msg" id="statusMsg"></p>
-          <div style="display:flex;gap:0.75rem;flex-wrap:wrap;">
-            <button type="button" id="deactivateBtn" class="danger">Deactivate Account</button>
-            <button type="button" id="activateBtn">Activate Account</button>
-          </div>
-        </form>
-
-        <div class="panel-sub" id="userListSection">
-          <h3>All Users</h3>
-          <table class="user-table" id="userTable">
-            <thead><tr><th>Username</th><th>Email</th><th>Role</th><th>Status</th></tr></thead>
-            <tbody id="userTableBody"></tbody>
-          </table>
-        </div>
-      </section>
-
       <section class="panel" id="guest-services">
-        <h2>Front Desk &amp; Guest Service Functions</h2>
+        <h2>Guest Service Functions</h2>
         <div class="kpi-grid">
           <article class="kpi"><h3>Total Requests</h3><p id="guestTotalMetric">0</p></article>
           <article class="kpi"><h3>Assigned</h3><p id="guestAssignedMetric">0</p></article>
@@ -186,6 +116,6 @@
     </main>
   </div>
 
-  <script src="manager-dashboard.js"></script>
+  <script src="supervisor-dashboard.js"></script>
 </body>
 </html>
