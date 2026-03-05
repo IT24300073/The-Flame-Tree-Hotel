@@ -1,12 +1,12 @@
-package project.flametreehotel.Services;
+package project.hotel.Services;
 
 import java.util.List;
 
 import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;
-import project.flametreehotel.Model.housekeeping;
-import project.flametreehotel.Repository.housekeepingRepository;
+import project.hotel.Model.housekeeping;
+import project.hotel.Repository.housekeepingRepository;
 
 @Service
 @RequiredArgsConstructor
