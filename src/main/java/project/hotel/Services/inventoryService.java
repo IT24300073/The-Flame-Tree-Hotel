@@ -1,12 +1,13 @@
-package project.hotel.Services;
+package project.flametreehotel.Services;
 
 import java.util.List;
+import java.util.Objects;
 
 import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;
-import project.hotel.Model.inventory;
-import project.hotel.Repository.inventoryRepository;
+import project.flametreehotel.Model.inventory;
+import project.flametreehotel.Repository.inventoryRepository;
 
 @Service
 @RequiredArgsConstructor
@@ -15,7 +16,27 @@ public class inventoryService {
     private final inventoryRepository repository;
 
     public List<inventory> getAllItems() {
-        return repository.findAll();
+        List<inventory> items = repository.findAll();
+        boolean hasStatusChanges = false;
+
+        for (inventory item : items) {
+            String recalculatedStatus = computeStatus(
+                    item.getInStock(),
+                    item.getMinLevel(),
+                    item.getDamaged(),
+                    item.getMissing());
+
+            if (!Objects.equals(item.getStatus(), recalculatedStatus)) {
+                item.setStatus(recalculatedStatus);
+                hasStatusChanges = true;
+            }
+        }
+
+        if (hasStatusChanges) {
+            repository.saveAll(items);
+        }
+
+        return items;
     }
 
     public inventory addItem(String item, String category, int inStock, int minLevel) {
@@ -57,10 +78,15 @@ public class inventoryService {
         repository.deleteById(id);
     }
 
+    private static final int LOW_STOCK_BUFFER = 10;
+
     private String computeStatus(int inStock, int minLevel, int damaged, int missing) {
-        if (inStock <= minLevel) {
-            return "Low Stock";
-        }
+    int usableStock = Math.max(0, inStock - Math.max(0, damaged) - Math.max(0, missing));
+    int lowStockThreshold = Math.max(0, minLevel) + LOW_STOCK_BUFFER;
+
+    if (usableStock <= lowStockThreshold) {
+        return "Low Stock";
+    }
         if (damaged > 0 || missing > 0) {
             return "Monitor";
         }
