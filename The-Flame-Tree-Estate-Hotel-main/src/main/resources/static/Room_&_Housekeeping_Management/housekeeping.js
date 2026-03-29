@@ -8,6 +8,8 @@ document.addEventListener('DOMContentLoaded', () => {
   attachEventListeners();
 });
 
+let housekeepingStaffOptions = [];
+
 async function loadAndRender() {
   try {
     const res = await fetch('/housekeeping/list');
@@ -22,13 +24,14 @@ async function loadAndRender() {
 
 function renderMetrics(tasks) {
   document.getElementById('totalTasksMetric').textContent = tasks.length;
-  document.getElementById('assignedMetric').textContent = tasks.filter((t) => t.taskStatus === 'Assigned').length;
+  document.getElementById('assignedMetric').textContent = tasks.filter((t) => t.taskStatus === 'Pending' || t.taskStatus === 'Assigned').length;
   document.getElementById('inProgressMetric').textContent = tasks.filter((t) => t.taskStatus === 'In Progress').length;
   document.getElementById('completedMetric').textContent = tasks.filter((t) => t.taskStatus === 'Completed').length;
 }
 
 function statusFromTask(status) {
   const statusMap = {
+    'Pending': 'assigned',
     'Assigned': 'assigned',
     'In Progress': 'clean',
     'Completed': 'completed',
@@ -64,7 +67,7 @@ function renderTable(tasks) {
       <td>${escapeHtml(task.requestType)}</td>
       <td>${escapeHtml(task.assignedStaff)}</td>
       <td><span class="tag ${statusClass}">${escapeHtml(task.taskStatus)}</span></td>
-      <td><span class="tag ${task.approved ? 'done' : 'assigned'}">${approvalLabel(Boolean(task.approved))}</span></td>
+      <td><span class="tag ${task.approved ? 'done' : 'assigned'}">${escapeHtml(task.supervisorDecision || approvalLabel(Boolean(task.approved)))}</span></td>
       <td>
         <div class="action-buttons">
           <button type="button" class="edit-btn" data-action="edit" data-id="${task.id}">Edit</button>
@@ -78,6 +81,7 @@ function renderTable(tasks) {
 
 function attachEventListeners() {
   document.getElementById('openAddDialogBtn').addEventListener('click', openAddDialog);
+  document.getElementById('requestType').addEventListener('change', toggleCustomRequestTypeInput);
 
   document.getElementById('cancelAddDialogBtn').addEventListener('click', () => {
     document.getElementById('addTaskDialog').close();
@@ -105,9 +109,84 @@ function attachEventListeners() {
   });
 }
 
-function openAddDialog() {
+async function openAddDialog() {
   document.getElementById('addTaskForm').reset();
+  toggleCustomRequestTypeInput();
+  await loadHousekeepingStaffOptions();
+  await fetchNextHousekeepingTaskId();
   document.getElementById('addTaskDialog').showModal();
+}
+
+function toggleCustomRequestTypeInput() {
+  const requestTypeSelect = document.getElementById('requestType');
+  const customContainer = document.getElementById('customRequestTypeContainer');
+  const customInput = document.getElementById('customRequestType');
+
+  if (!(requestTypeSelect instanceof HTMLSelectElement) || !(customContainer instanceof HTMLElement) || !(customInput instanceof HTMLInputElement)) {
+    return;
+  }
+
+  const isOther = requestTypeSelect.value === 'Other';
+  customContainer.style.display = isOther ? 'block' : 'none';
+
+  if (!isOther) {
+    customInput.value = '';
+  }
+}
+
+function normalizeRole(value) {
+  return String(value || '').trim().toLowerCase();
+}
+
+function escapeAttr(value) {
+  return escapeHtml(value).replace(/"/g, '&quot;');
+}
+
+async function loadHousekeepingStaffOptions() {
+  const select = document.getElementById('staffName');
+  if (!(select instanceof HTMLSelectElement)) {
+    return;
+  }
+
+  try {
+    const res = await fetch('/auth/users');
+    if (!res.ok) {
+      throw new Error('Failed to load users.');
+    }
+
+    const users = await res.json();
+    const staff = (Array.isArray(users) ? users : [])
+      .filter((user) => Boolean(user?.status))
+      .filter((user) => normalizeRole(user?.role).includes('housekeeping'))
+      .map((user) => String(user?.username || '').trim())
+      .filter(Boolean)
+      .sort((a, b) => a.localeCompare(b));
+
+    housekeepingStaffOptions = [...new Set(staff)];
+  } catch {
+    housekeepingStaffOptions = [];
+  }
+
+  if (!housekeepingStaffOptions.length) {
+    select.innerHTML = '<option value="">No active housekeeping staff found</option>';
+    return;
+  }
+
+  select.innerHTML = `
+    <option value="">Select housekeeping staff</option>
+    ${housekeepingStaffOptions.map((name) => `<option value="${escapeAttr(name)}">${escapeHtml(name)}</option>`).join('')}
+  `;
+}
+
+async function fetchNextHousekeepingTaskId() {
+  try {
+    const res = await fetch('/housekeeping/next-task-id');
+    if (!res.ok) throw new Error('Could not generate next housekeeping task ID.');
+    const data = await res.json();
+    document.getElementById('requestId').value = data.requestId || '';
+  } catch {
+    showMessage('Error generating housekeeping task ID. Please try again.');
+  }
 }
 
 async function openUpdateDialog(id) {
@@ -124,7 +203,9 @@ async function openUpdateDialog(id) {
     document.getElementById('updateTaskDbId').value = String(task.id);
     document.getElementById('updateRequestId').value = task.requestId;
     document.getElementById('updateRoomNo').value = task.room;
-    document.getElementById('updateRequestType').value = task.requestType;
+    const updateRequestTypeSelect = document.getElementById('updateRequestType');
+    ensureOptionExists(updateRequestTypeSelect, task.requestType);
+    updateRequestTypeSelect.value = task.requestType;
     document.getElementById('updateStaffName').value = task.assignedStaff;
     document.getElementById('updateTaskStatus').value = task.taskStatus;
 
@@ -132,6 +213,21 @@ async function openUpdateDialog(id) {
   } catch {
     showMessage('Error fetching task details.');
   }
+}
+
+function ensureOptionExists(selectEl, value) {
+  if (!(selectEl instanceof HTMLSelectElement)) return;
+
+  const normalized = String(value ?? '').trim();
+  if (!normalized) return;
+
+  const exists = Array.from(selectEl.options).some((option) => option.value === normalized || option.text === normalized);
+  if (exists) return;
+
+  const option = document.createElement('option');
+  option.value = normalized;
+  option.textContent = normalized;
+  selectEl.appendChild(option);
 }
 
 async function handleAddSubmit(e) {
@@ -143,13 +239,37 @@ async function handleAddSubmit(e) {
     return;
   }
 
+  const requestTypeValue = document.getElementById('requestType').value;
+  const customRequestTypeValue = document.getElementById('customRequestType').value.trim();
+  const resolvedRequestType = requestTypeValue === 'Other' ? customRequestTypeValue : requestTypeValue;
+
   const payload = {
     requestId,
-    room: document.getElementById('roomNo').value.trim(),
-    requestType: document.getElementById('requestType').value,
-    assignedStaff: document.getElementById('staffName').value.trim(),
+    room: document.getElementById('roomNo').value,
+    requestType: resolvedRequestType,
+    assignedStaff: document.getElementById('staffName').value,
     taskStatus: document.getElementById('taskStatus').value,
   };
+
+  if (!requestTypeValue) {
+    showMessage('Please select a request type.');
+    return;
+  }
+
+  if (requestTypeValue === 'Other' && !customRequestTypeValue) {
+    showMessage('Please type a custom request type.');
+    return;
+  }
+
+  if (!payload.room) {
+    showMessage('Please select a room.');
+    return;
+  }
+
+  if (!payload.assignedStaff) {
+    showMessage('Please select a housekeeping staff member.');
+    return;
+  }
 
   try {
     const res = await fetch('/housekeeping/add', {

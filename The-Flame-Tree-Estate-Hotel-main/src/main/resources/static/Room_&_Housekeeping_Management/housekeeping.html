@@ -17,7 +17,7 @@
         <h1>The Flame Tree Estate Hotel</h1>
         <p class="subtitle">Manage room status, assign housekeeping work, and track cleanliness plus linen/consumable usage.</p>
       </div>
-      <a class="back-link" href="../User_Management/index.html">Back to Login</a>
+      <a class="back-link" href="../User_Management/index.html">Logout</a>
     </header>
 
     <main class="layout">
@@ -30,7 +30,7 @@
             <p>All housekeeping tasks in the system.</p>
           </article>
           <article class="summary-card">
-            <h3>Assigned</h3>
+            <h3>Pending</h3>
             <p class="metric" id="assignedMetric">0</p>
             <p>Tasks awaiting completion.</p>
           </article>
@@ -78,27 +78,45 @@
       <h3>Add Housekeeping Task</h3>
 
       <label for="requestId">Request ID</label>
-      <input id="requestId" type="text" placeholder="e.g., HK-2026-031" required />
+      <input id="requestId" type="text" placeholder="e.g., HKP-001" readonly required />
 
-      <label for="roomNo">Room Number</label>
-      <input id="roomNo" type="text" placeholder="e.g., 305" required />
+      <label for="roomNo">Room Name</label>
+      <select id="roomNo" required>
+        <option value="">Choose room</option>
+        <option>The Loving Leopards (Penthouse)</option>
+        <option>The Curious Chameleon (Treehouse)</option>
+        <option>Dancing Elephant (Deluxe)</option>
+        <option>Cordial Crocodile (Deluxe)</option>
+        <option>Hanging Monkey (Deluxe)</option>
+        <option>Flying Squirrel (Deluxe)</option>
+        <option>Mindful Mongoose (Heritage)</option>
+        <option>Singing Civet (Heritage)</option>
+        <option>Amorous Porcupine (Heritage)</option>
+      </select>
 
       <label for="requestType">Request Type</label>
       <select id="requestType" required>
         <option value="">Select request type</option>
-        <option>Room Cleaning</option>
-        <option>Extra Linen</option>
+        <option>Room Assistance</option>
+        <option>Extra Towels</option>
         <option>Toiletries Refill</option>
-        <option>Turn-down Service</option>
-        <option>Other Assistance</option>
+        <option>Cleaning Follow-up</option>
+        <option>Other</option>
       </select>
 
+      <div id="customRequestTypeContainer" style="display: none;">
+        <label for="customRequestType">Other Request Type</label>
+        <input id="customRequestType" type="text" placeholder="Type custom request type" />
+      </div>
+
       <label for="staffName">Assigned Staff</label>
-      <input id="staffName" type="text" placeholder="Housekeeping staff name" required />
+      <select id="staffName" required>
+        <option value="">Select housekeeping staff</option>
+      </select>
 
       <label for="taskStatus">Task Status</label>
       <select id="taskStatus" required>
-        <option>Assigned</option>
+        <option>Pending</option>
         <option>In Progress</option>
         <option>Completed</option>
       </select>
@@ -125,11 +143,11 @@
       <label for="updateRequestType">Request Type</label>
       <select id="updateRequestType" required>
         <option value="">Select request type</option>
-        <option>Room Cleaning</option>
-        <option>Extra Linen</option>
+        <option>Room Assistance</option>
+        <option>Extra Towels</option>
         <option>Toiletries Refill</option>
-        <option>Turn-down Service</option>
-        <option>Other Assistance</option>
+        <option>Cleaning Follow-up</option>
+        <option>Other</option>
       </select>
 
       <label for="updateStaffName">Assigned Staff</label>
@@ -137,7 +155,7 @@
 
       <label for="updateTaskStatus">Task Status</label>
       <select id="updateTaskStatus" required>
-        <option>Assigned</option>
+        <option>Pending</option>
         <option>In Progress</option>
         <option>Completed</option>
       </select>
