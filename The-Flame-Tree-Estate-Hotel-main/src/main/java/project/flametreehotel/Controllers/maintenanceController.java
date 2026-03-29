@@ -31,6 +31,11 @@ public class maintenanceController {
         return ResponseEntity.ok(service.getAllTickets());
     }
 
+    @GetMapping("/next-ticket-id")
+    public ResponseEntity<Map<String, String>> nextTicketId() {
+        return ResponseEntity.ok(Map.of("ticket", service.generateNextMaintenanceTicketId()));
+    }
+
     /**
      * POST /maintenance/add
      * Body: { "ticket": "...", "location": "...", "issue": "...", "assignedTo": "...", "status": "..." }
@@ -45,7 +50,7 @@ public class maintenanceController {
         String assignedTo = (String) body.get("assignedTo");
         String status = (String) body.get("status");
 
-        if (ticket == null || ticket.isBlank() || location == null || location.isBlank()
+        if (location == null || location.isBlank()
                 || issue == null || issue.isBlank() || assignedTo == null || assignedTo.isBlank()
                 || status == null || status.isBlank()) {
             response.put("success", false);
@@ -54,7 +59,10 @@ public class maintenanceController {
         }
 
         try {
-            maintenance created = service.addTicket(ticket.trim(), location.trim(), issue.trim(), assignedTo.trim(), status);
+            String resolvedTicket = (ticket == null || ticket.isBlank())
+                    ? service.generateNextMaintenanceTicketId()
+                    : ticket.trim();
+            maintenance created = service.addTicket(resolvedTicket, location.trim(), issue.trim(), assignedTo.trim(), status);
             response.put("success", true);
             response.put("message", "Added ticket " + created.getTicket() + ".");
             response.put("ticket", created);
@@ -110,20 +118,20 @@ public class maintenanceController {
 
     /**
      * POST /maintenance/approve
-     * Body: { "id": 1, "approved": true, "role": "Manager" }
+     * Body: { "id": 1, "decision": "Approved|Rejected", "reassignedTo": "...", "rejectionReason": "...", "role": "Manager" }
      */
     @PostMapping("/approve")
     public ResponseEntity<Map<String, Object>> approveMaintenance(@RequestBody Map<String, Object> body) {
         Map<String, Object> response = new HashMap<>();
 
-        if (body.get("id") == null || body.get("approved") == null) {
+        if (body.get("id") == null) {
             response.put("success", false);
-            response.put("message", "Record ID and approved value are required.");
+            response.put("message", "Record ID is required.");
             return ResponseEntity.badRequest().body(response);
         }
 
         String role = String.valueOf(body.getOrDefault("role", "")).trim();
-        boolean allowed = "Manager".equalsIgnoreCase(role) || "Staff Supervisor".equalsIgnoreCase(role);
+        boolean allowed = isSupervisorOrManager(role);
         if (!allowed) {
             response.put("success", false);
             response.put("message", "Only manager or supervisor can approve tickets.");
@@ -131,12 +139,19 @@ public class maintenanceController {
         }
 
         int id = ((Number) body.get("id")).intValue();
-        boolean approved = Boolean.parseBoolean(String.valueOf(body.get("approved")));
+        String decision = String.valueOf(body.getOrDefault("decision", "")).trim();
+        if (decision.isBlank() && body.get("approved") != null) {
+            boolean approved = Boolean.parseBoolean(String.valueOf(body.get("approved")));
+            decision = approved ? "Approved" : "Rejected";
+        }
+
+        String reassignedTo = String.valueOf(body.getOrDefault("reassignedTo", "")).trim();
+        String rejectionReason = String.valueOf(body.getOrDefault("rejectionReason", "")).trim();
 
         try {
-            maintenance updated = service.setApproval(id, approved);
+            maintenance updated = service.supervisorDecision(id, decision, reassignedTo, rejectionReason);
             response.put("success", true);
-            response.put("message", "Ticket " + updated.getTicket() + (approved ? " approved." : " unapproved."));
+            response.put("message", "Task " + updated.getTicket() + " marked as " + updated.getSupervisorDecision() + ".");
             response.put("ticket", updated);
             return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
@@ -172,5 +187,12 @@ public class maintenanceController {
             response.put("message", e.getMessage());
             return ResponseEntity.badRequest().body(response);
         }
+    }
+
+    private boolean isSupervisorOrManager(String role) {
+        if (role == null) return false;
+        String normalized = role.trim().toLowerCase();
+        return normalized.contains("manager") || normalized.contains("supervisor") || 
+               "manager".equals(normalized) || "supervisor".equals(normalized);
     }
 }

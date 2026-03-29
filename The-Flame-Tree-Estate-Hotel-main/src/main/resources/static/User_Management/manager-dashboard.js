@@ -46,13 +46,37 @@ const currentRole = localStorage.getItem('currentUserRole') || 'Manager';
 
 async function loadApprovalTables() {
   try {
-    const [housekeepingRes, maintenanceRes] = await Promise.all([
+    const [guestRoutingRes, housekeepingRes, maintenanceRes, inventoryRes] = await Promise.all([
+      fetch('/guestservice/routing-pending'),
       fetch('/housekeeping/list'),
-      fetch('/maintenance/list')
+      fetch('/maintenance/list'),
+      fetch('/inventory/low-stock-pending')
     ]);
 
+    const routingRequests = guestRoutingRes.ok ? await guestRoutingRes.json() : [];
     const housekeepingTasks = housekeepingRes.ok ? await housekeepingRes.json() : [];
     const maintenanceTickets = maintenanceRes.ok ? await maintenanceRes.json() : [];
+    const inventoryItems = inventoryRes.ok ? await inventoryRes.json() : [];
+
+    const guestRoutingBody = document.getElementById('guestRoutingTableBody');
+    if (guestRoutingBody) {
+      guestRoutingBody.innerHTML = routingRequests.length
+        ? routingRequests.map((request) => `
+          <tr>
+            <td>${escapeHtml(request.requestId)}</td>
+            <td>${escapeHtml(request.roomName)}</td>
+            <td>${escapeHtml(request.request)}</td>
+            <td>${escapeHtml(formatDateTime(request.requestDateTime))}</td>
+            <td>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <button type="button" class="approve-btn" data-module="guest-route" data-route="housekeeping" data-requestid="${escapeHtml(request.requestId)}">Housekeeping</button>
+                <button type="button" class="approve-btn" data-module="guest-route" data-route="maintenance" data-requestid="${escapeHtml(request.requestId)}">Maintenance</button>
+              </div>
+            </td>
+          </tr>
+        `).join('')
+        : '<tr><td colspan="5">No new guest requests waiting for routing.</td></tr>';
+    }
 
     const housekeepingBody = document.getElementById('housekeepingApprovalTableBody');
     if (housekeepingBody) {
@@ -85,19 +109,66 @@ async function loadApprovalTables() {
         `).join('')
         : '<tr><td colspan="5">No repaired maintenance tickets pending approval.</td></tr>';
     }
+
+    const inventoryBody = document.getElementById('inventoryApprovalTableBody');
+    if (inventoryBody) {
+      inventoryBody.innerHTML = inventoryItems.length
+        ? inventoryItems.map((item) => `
+          <tr>
+            <td>${escapeHtml(item.item)}</td>
+            <td>${escapeHtml(item.category)}</td>
+            <td>${item.inStock}</td>
+            <td>${item.minLevel}</td>
+            <td><span class="status-pill watch">${escapeHtml(item.status)}</span></td>
+            <td><button type="button" class="approve-btn" data-module="inventory" data-id="${item.id}">Approve</button></td>
+          </tr>
+        `).join('')
+        : '<tr><td colspan="6">No low stock items awaiting approval.</td></tr>';
+    }
   } catch (err) {
     console.error('Could not load approval tables', err);
   }
 }
 
 async function updateApproval(moduleName, id, approved) {
-  const url = moduleName === 'housekeeping' ? '/housekeeping/approve' : '/maintenance/approve';
-  const data = await apiPost(url, { id, approved, role: currentRole });
+  let url;
+  if (moduleName === 'housekeeping') {
+    url = '/housekeeping/approve';
+  } else if (moduleName === 'maintenance') {
+    url = '/maintenance/approve';
+  } else if (moduleName === 'inventory') {
+    url = '/inventory/approve';
+  } else {
+    alert('Unknown module.');
+    return;
+  }
+
+  const body = moduleName === 'inventory' ? { id } : { id, approved, role: currentRole };
+  const data = await apiPost(url, body);
   if (!data.success) {
     alert(data.message || 'Approval update failed.');
     return;
   }
+  
+  loadApprovalTables();
+}
 
+async function routeGuestRequest(requestId, targetModule) {
+  const data = await apiPost('/guestservice/route', {
+    requestId,
+    targetModule,
+    role: currentRole,
+  });
+
+  if (!data.success) {
+    alert(data.message || 'Could not route guest request.');
+    return;
+  }
+
+  await Promise.all([loadDashboardMetrics(), loadApprovalTables()]);
+}
+
+async function initializeDashboard() {
   await Promise.all([loadDashboardMetrics(), loadApprovalTables()]);
 }
 
@@ -117,21 +188,22 @@ async function loadDashboardMetrics() {
     const maintenanceTickets = maintenanceRes.ok ? await maintenanceRes.json() : [];
     const orders = ordersRes.ok ? await ordersRes.json() : [];
 
-    const guestAssigned = countByStatus(guestRequests, 'status', 'Assigned');
+    const guestPending = countByStatus(guestRequests, 'status', 'Pending');
     const guestInProgress = countByStatus(guestRequests, 'status', 'In Progress');
     const guestCompleted = countByStatus(guestRequests, 'status', 'Completed');
 
     setMetric('guestTotalMetric', guestRequests.length);
-    setMetric('guestAssignedMetric', guestAssigned);
+    setMetric('guestPendingMetric', guestPending);
     setMetric('guestInProgressMetric', guestInProgress);
     setMetric('guestCompletedMetric', guestCompleted);
 
-    const housekeepingAssigned = countByStatus(housekeepingTasks, 'taskStatus', 'Assigned');
+    const housekeepingPending = countByStatus(housekeepingTasks, 'taskStatus', 'Pending')
+      + countByStatus(housekeepingTasks, 'taskStatus', 'Assigned');
     const housekeepingInProgress = countByStatus(housekeepingTasks, 'taskStatus', 'In Progress');
     const housekeepingCompleted = countByStatus(housekeepingTasks, 'taskStatus', 'Completed');
 
     setMetric('housekeepingTotalMetric', housekeepingTasks.length);
-    setMetric('housekeepingAssignedMetric', housekeepingAssigned);
+    setMetric('housekeepingPendingMetric', housekeepingPending);
     setMetric('housekeepingInProgressMetric', housekeepingInProgress);
     setMetric('housekeepingCompletedMetric', housekeepingCompleted);
 
@@ -144,15 +216,19 @@ async function loadDashboardMetrics() {
     setMetric('inventoryDamagedMetric', inventoryDamaged);
     setMetric('inventoryMissingMetric', inventoryMissing);
 
-    const maintenanceOpen = countByStatus(maintenanceTickets, 'status', 'Open');
+    const maintenancePending = countByStatus(maintenanceTickets, 'status', 'Pending')
+      + countByStatus(maintenanceTickets, 'status', 'Open');
     const maintenanceInProgress = countByStatus(maintenanceTickets, 'status', 'In Progress');
-    const maintenanceRepaired = countByStatus(maintenanceTickets, 'status', 'Repaired');
-    const maintenanceReplacement = countByStatus(maintenanceTickets, 'status', 'Replacement Needed');
+    const maintenanceCompleted = countByStatus(maintenanceTickets, 'status', 'Completed')
+      + countByStatus(maintenanceTickets, 'status', 'Repaired');
+    const maintenanceRejected = maintenanceTickets.filter(
+      (ticket) => String(ticket?.supervisorDecision || '').toLowerCase() === 'rejected'
+    ).length;
 
-    setMetric('maintenanceOpenMetric', maintenanceOpen);
+    setMetric('maintenancePendingMetric', maintenancePending);
     setMetric('maintenanceInProgressMetric', maintenanceInProgress);
-    setMetric('maintenanceRepairedMetric', maintenanceRepaired);
-    setMetric('maintenanceReplacementMetric', maintenanceReplacement);
+    setMetric('maintenanceCompletedMetric', maintenanceCompleted);
+    setMetric('maintenanceRejectedMetric', maintenanceRejected);
 
     const ordersPending = countByStatus(orders, 'status', 'Pending');
     const ordersPartial = countByStatus(orders, 'status', 'Partial');
@@ -163,10 +239,10 @@ async function loadDashboardMetrics() {
     setMetric('ordersPartialMetric', ordersPartial);
     setMetric('ordersCompleteMetric', ordersComplete);
 
-    setMetric('overviewOpenGuestRequestsMetric', guestAssigned + guestInProgress);
-    setMetric('overviewPendingHousekeepingMetric', housekeepingAssigned + housekeepingInProgress);
+    setMetric('overviewOpenGuestRequestsMetric', guestPending + guestInProgress);
+    setMetric('overviewPendingHousekeepingMetric', housekeepingPending + housekeepingInProgress);
     setMetric('overviewLowInventoryMetric', inventoryLowStock);
-    setMetric('overviewOpenMaintenanceMetric', maintenanceOpen + maintenanceInProgress + maintenanceReplacement);
+    setMetric('overviewOpenMaintenanceMetric', maintenancePending + maintenanceInProgress + maintenanceRejected);
   } catch (err) {
     console.error('Could not load dashboard metrics', err);
   }
@@ -196,8 +272,7 @@ async function loadUsers() {
 }
 
 loadUsers();
-loadDashboardMetrics();
-loadApprovalTables();
+initializeDashboard();
 
 // ── Create User Account ──────────────────────────────────────────────────
 document.getElementById('createUserForm').addEventListener('submit', async (e) => {
@@ -267,9 +342,29 @@ document.addEventListener('click', async (event) => {
   if (!(target instanceof HTMLElement) || !target.classList.contains('approve-btn')) return;
 
   const moduleName = target.dataset.module;
+
+  if (moduleName === 'guest-route') {
+    const requestId = target.dataset.requestid;
+    const routeTo = target.dataset.route;
+    if (!requestId || !routeTo) return;
+    await routeGuestRequest(requestId, routeTo);
+    return;
+  }
+
   const id = Number(target.dataset.id);
   const approved = String(target.dataset.approved) === 'true';
 
   if (!moduleName || Number.isNaN(id)) return;
   await updateApproval(moduleName, id, approved);
 });
+
+function formatDateTime(value) {
+  if (!value) {
+    return '-';
+  }
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return String(value);
+  }
+  return date.toLocaleString();
+}
