@@ -14,12 +14,18 @@ import project.hotel.Repository.inventoryRepository;
 public class inventoryService {
 
     private final inventoryRepository repository;
+    private final inventoryApprovalNotificationService notificationService;
 
     public List<inventory> getAllItems() {
         List<inventory> items = repository.findAll();
         boolean hasStatusChanges = false;
 
         for (inventory item : items) {
+            // Don't recalculate status if it's "Pending" - preserve manual approval status
+            if ("Pending".equals(item.getStatus())) {
+                continue;
+            }
+
             String recalculatedStatus = computeStatus(
                     item.getInStock(),
                     item.getMinLevel(),
@@ -60,6 +66,8 @@ public class inventoryService {
         inventory existing = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Item not found."));
 
+        validateStockBreakdown(inStock, damaged, missing);
+
         existing.setItem(item);
         existing.setCategory(category);
         existing.setInStock(inStock);
@@ -78,7 +86,29 @@ public class inventoryService {
         repository.deleteById(id);
     }
 
+    public List<inventory> getLowStockPending() {
+        List<inventory> items = repository.findAll();
+        return items.stream()
+                .filter(item -> "Low Stock".equals(item.getStatus()))
+                .toList();
+    }
+
+    public inventory approveItem(int id) {
+        inventory item = repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Item not found."));
+        item.setStatus("Pending");
+        inventory approvedItem = repository.save(item);
+        notificationService.createFromApprovedInventory(approvedItem, "Manager");
+        return approvedItem;
+    }
+
     private static final int LOW_STOCK_BUFFER = 10;
+
+    private void validateStockBreakdown(int inStock, int damaged, int missing) {
+        if ((damaged + missing) > inStock) {
+            throw new RuntimeException("Damaged and missing totals cannot exceed the stock level.");
+        }
+    }
 
     private String computeStatus(int inStock, int minLevel, int damaged, int missing) {
     int usableStock = Math.max(0, inStock - Math.max(0, damaged) - Math.max(0, missing));
