@@ -19,4 +19,10 @@ public class maintenance {
     private String status;
 
     private boolean approved;
+
+    private String guestRequestId;
+
+    private String supervisorDecision;
+
+    private String rejectionReason;
 }
