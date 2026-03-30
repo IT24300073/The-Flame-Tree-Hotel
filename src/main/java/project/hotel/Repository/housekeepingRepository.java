@@ -8,4 +8,6 @@ import project.hotel.Model.housekeeping;
 
 public interface housekeepingRepository extends JpaRepository<housekeeping, Integer> {
     Optional<housekeeping> findByRequestId(String requestId);
+
+    java.util.List<housekeeping> findByTaskStatusIgnoreCase(String taskStatus);
 }
