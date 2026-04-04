@@ -17,7 +17,7 @@
         <h1>The Flame Tree Estate Hotel</h1>
         <p class="subtitle">Manage suppliers and purchase workflows to ensure timely restocking of hotel supplies.</p>
       </div>
-      <a class="back-link" href="../User_Management/index.html">Back to Login</a>
+      <a class="back-link" href="../User_Management/index.html">Logout</a>
     </header>
 
     <main class="layout">
@@ -51,6 +51,7 @@
         <h2>Manage Purchase Orders</h2>
         <div class="table-actions">
           <button type="button" id="openAddDialogBtn">Add PO</button>
+          <span class="notification-badge-wrap">Pending Alerts: <strong id="lowStockNotificationBadge">0</strong></span>
         </div>
         <div class="table-wrap">
           <table>
@@ -69,6 +70,26 @@
         </div>
         <p id="poMessage" aria-live="polite"></p>
       </section>
+
+      <section class="panel full-width">
+        <h2>Low Stock Approvals from Manager</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Approved At</th>
+                <th>Item</th>
+                <th>Category</th>
+                <th>In Stock</th>
+                <th>Min Level</th>
+                <th>Suggested Qty</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="lowStockNotificationBody"></tbody>
+          </table>
+        </div>
+      </section>
     </main>
   </div>
 
@@ -77,10 +98,16 @@
       <h3>Add Purchase Order</h3>
 
       <label for="poId">PO ID</label>
-      <input id="poId" type="text" placeholder="e.g., PO-2026-048" required />
+      <input id="poId" type="text" placeholder="Auto-generated" readonly required />
 
       <label for="supplierName">Supplier</label>
-      <input id="supplierName" type="text" placeholder="Supplier name" required />
+      <select id="supplierName" required>
+        <option value="">Select Supplier</option>
+        <option value="CleanNest Essentials">CleanNest Essentials (toiletries)</option>
+        <option value="LuxeStay Suppliers">LuxeStay Suppliers (bathroom essentials)</option>
+        <option value="ComfortCotton Lanka">ComfortCotton Lanka (bedding)</option>
+        <option value="GreenLeaf Produce">GreenLeaf Produce (consumable items)</option>
+      </select>
 
       <label for="itemName">Item</label>
       <input id="itemName" type="text" placeholder="e.g., Bath Towels" required />
