@@ -1,4 +1,4 @@
-package project.hotel.Model;
+package project.flametreehotel.Model;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
