@@ -1,4 +1,4 @@
-package project.flametreehotel.Services;
+package project.hotel.Services;
 
 import java.util.List;
 import java.util.regex.Matcher;
@@ -8,8 +8,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
-import project.flametreehotel.Model.orders;
-import project.flametreehotel.Repository.ordersRepository;
+import project.hotel.Model.orders;
+import project.hotel.Repository.ordersRepository;
 
 @Service
 @RequiredArgsConstructor
