@@ -1,4 +1,4 @@
-const currentRole = localStorage.getItem('currentUserRole') || 'Staff Supervisor';
+const currentRole = localStorage.getItem('currentUserRole') || 'supervisor';
 
 const state = {
   rows: [],
