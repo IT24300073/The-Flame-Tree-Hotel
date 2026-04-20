@@ -1,4 +1,4 @@
-package project.hotel.Services;
+package project.flametreehotel.Services;
 
 import java.util.List;
 import java.util.regex.Matcher;
@@ -7,8 +7,8 @@ import java.util.regex.Pattern;
 import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;
-import project.hotel.Model.housekeeping;
-import project.hotel.Repository.housekeepingRepository;
+import project.flametreehotel.Model.housekeeping;
+import project.flametreehotel.Repository.housekeepingRepository;
 
 @Service
 @RequiredArgsConstructor
