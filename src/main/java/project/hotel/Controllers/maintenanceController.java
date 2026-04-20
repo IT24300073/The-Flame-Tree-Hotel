@@ -12,8 +12,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import lombok.RequiredArgsConstructor;
-import project.flametreehotel.Model.maintenance;
-import project.flametreehotel.Services.maintenanceService;
+import project.hotel.Model.maintenance;
+import project.hotel.Services.maintenanceService;
 
 @RestController
 @RequestMapping("/maintenance")

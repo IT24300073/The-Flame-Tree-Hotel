@@ -1,4 +1,4 @@
-package project.flametreehotel.Repository;
+package project.hotel.Repository;
 
 import java.util.List;
 import java.util.Optional;

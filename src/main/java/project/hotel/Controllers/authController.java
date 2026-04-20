@@ -1,4 +1,4 @@
-package project.flametreehotel.Controllers;
+package project.hotel.Controllers;
 
 import java.util.HashMap;
 import java.util.List;
@@ -13,8 +13,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import lombok.RequiredArgsConstructor;
-import project.flametreehotel.Model.users;
-import project.flametreehotel.Services.authService;
+import project.hotel.Model.users;
+import project.hotel.Services.authService;
 
 @RestController
 @RequestMapping("/auth")

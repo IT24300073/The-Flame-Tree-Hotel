@@ -1,4 +1,4 @@
-package project.flametreehotel.Services;
+package project.hotel.Services;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -9,11 +9,11 @@ import java.util.Map;
 import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;
-import project.flametreehotel.Model.inventory;
-import project.flametreehotel.Model.inventoryApprovalNotification;
-import project.flametreehotel.Model.orders;
-import project.flametreehotel.Repository.inventoryApprovalNotificationRepository;
-import project.flametreehotel.Repository.ordersRepository;
+import project.hotel.Model.inventory;
+import project.hotel.Model.inventoryApprovalNotification;
+import project.hotel.Model.orders;
+import project.hotel.Repository.inventoryApprovalNotificationRepository;
+import project.hotel.Repository.ordersRepository;
 
 @Service
 @RequiredArgsConstructor

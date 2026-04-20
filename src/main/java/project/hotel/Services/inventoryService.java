@@ -1,4 +1,4 @@
-package project.flametreehotel.Services;
+package project.hotel.Services;
 
 import java.util.List;
 import java.util.Objects;
