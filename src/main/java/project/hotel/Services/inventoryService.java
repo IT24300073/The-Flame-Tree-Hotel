@@ -95,14 +95,68 @@ public class inventoryService {
                 .toList();
     }
 
-    public inventory approveItem(int id) {
+    public inventory approveItem(int id, int approvedQty) {
+        if (approvedQty < 1) {
+            throw new RuntimeException("Approved quantity must be at least 1.");
+        }
+
         inventory item = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Item not found."));
         item.setApproved(true);
         item.setStatus("Pending");
         inventory approvedItem = repository.save(item);
-        notificationService.createFromApprovedInventory(approvedItem, "Manager");
+        notificationService.createFromApprovedInventory(approvedItem, "Manager", approvedQty);
         return approvedItem;
+    }
+
+    public inventory consumeStock(int id, int usedQty) {
+        return consumeStock(id, usedQty, 0);
+    }
+
+    public inventory consumeStock(int id, int usedQty, int damagedQty) {
+        if (usedQty < 1) {
+            throw new RuntimeException("Used quantity must be at least 1.");
+        }
+
+        if (damagedQty < 0) {
+            throw new RuntimeException("Damaged quantity cannot be negative.");
+        }
+
+        inventory item = repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Inventory item not found."));
+
+        int currentUsable = Math.max(0, item.getInStock() - Math.max(0, item.getDamaged()) - Math.max(0, item.getMissing()));
+        if (currentUsable < usedQty) {
+            throw new RuntimeException("Not enough stock available.");
+        }
+
+        int updatedStock = item.getInStock() - usedQty;
+        int updatedDamaged = item.getDamaged() + damagedQty;
+
+        validateStockBreakdown(updatedStock, updatedDamaged, item.getMissing());
+
+        item.setInStock(updatedStock);
+        item.setDamaged(updatedDamaged);
+        item.setApproved(false);
+        item.setStatus(computeStatus(updatedStock, item.getMinLevel(), updatedDamaged, item.getMissing()));
+
+        return repository.save(item);
+    }
+
+    public inventory receiveStock(String itemName, int receivedQty) {
+        if (receivedQty < 1) {
+            throw new RuntimeException("Received quantity must be at least 1.");
+        }
+
+        inventory item = repository.findFirstByItemIgnoreCase(itemName)
+                .orElseThrow(() -> new RuntimeException("Inventory item not found for received stock."));
+
+        int updatedStock = item.getInStock() + receivedQty;
+        item.setInStock(updatedStock);
+        item.setApproved(false);
+        item.setStatus(computeStatus(updatedStock, item.getMinLevel(), item.getDamaged(), item.getMissing()));
+
+        return repository.save(item);
     }
 
     private static final int LOW_STOCK_BUFFER = 10;
