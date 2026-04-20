@@ -1,4 +1,4 @@
-package project.hotel.Controllers;
+package project.flametreehotel.Controllers;
 
 import java.util.HashMap;
 import java.util.List;
@@ -12,8 +12,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import lombok.RequiredArgsConstructor;
-import project.hotel.Model.maintenance;
-import project.hotel.Services.maintenanceService;
+import project.flametreehotel.Model.maintenance;
+import project.flametreehotel.Services.maintenanceService;
 
 @RestController
 @RequestMapping("/maintenance")
