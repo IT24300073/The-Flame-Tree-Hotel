@@ -48,6 +48,50 @@
       </section>
 
       <section class="panel full-width">
+        <h2>Live Alerts</h2>
+        <div class="approval-alerts-head">
+          <p class="approval-alerts-note">Live updates when the manager approves a low-stock request.</p>
+          <div class="approval-alert-actions">
+            <span class="approval-badge-wrap">New Alerts: <strong id="inventoryApprovalBadge">0</strong></span>
+            <button type="button" id="inventoryClearAlertsBtn" class="clear-alerts-btn">Clear Alerts</button>
+          </div>
+        </div>
+        <ul class="approval-alert-list" id="inventoryApprovalList">
+          <li>No approvals received yet.</li>
+        </ul>
+
+        <div class="approval-subsection">
+          <div class="approval-alerts-head">
+            <p class="approval-alerts-note">Supplier PO confirmations created from approved low-stock requests.</p>
+            <span class="approval-badge-wrap">Supplier PO Alerts: <strong id="inventorySupplierPoBadge">0</strong></span>
+          </div>
+          <ul class="approval-alert-list" id="inventorySupplierPoList">
+            <li>No supplier PO confirmations yet.</li>
+          </ul>
+        </div>
+
+        <div class="approval-subsection">
+          <div class="approval-alerts-head">
+            <p class="approval-alerts-note">Orders marked complete and received into inventory.</p>
+            <span class="approval-badge-wrap">Orders Received: <strong id="inventoryReceivedPoBadge">0</strong></span>
+          </div>
+          <ul class="approval-alert-list" id="inventoryReceivedPoList">
+            <li>No completed order receipts yet.</li>
+          </ul>
+        </div>
+
+        <div class="approval-subsection">
+          <div class="approval-alerts-head">
+            <p class="approval-alerts-note">Housekeeping inventory usage alerts with staff and quantity.</p>
+            <span class="approval-badge-wrap">Housekeeping Usage: <strong id="inventoryUsageBadge">0</strong></span>
+          </div>
+          <ul class="approval-alert-list" id="inventoryUsageList">
+            <li>No housekeeping usage alerts yet.</li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="panel full-width">
         <h2>Inventory Stock Levels</h2>
         <div class="table-actions">
           <button type="button" id="openAddDialogBtn">Add Inventory Item</button>
@@ -62,6 +106,7 @@
                 <th>Min Level</th>
                 <th>Damaged</th>
                 <th>Missing</th>
+                <th>Usable Stock</th>
                 <th>Status</th>
                 <th>Actions</th>
               </tr>
@@ -70,6 +115,30 @@
           </table>
         </div>
         <p id="inventoryMessage" aria-live="polite"></p>
+      </section>
+
+      <section class="panel full-width">
+        <h2>Approve Received Stock</h2>
+        <div class="approval-alerts-head">
+          <p class="approval-alerts-note">Completed purchase orders waiting for inventory approval or rejection.</p>
+          <div class="approval-alert-actions">
+            <span class="approval-badge-wrap">Pending Review: <strong id="receivedStockApprovalBadge">0</strong></span>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Item</th>
+                <th>Supplier</th>
+                <th>Qty</th>
+                <th>Received At</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="receivedStockApprovalBody"></tbody>
+          </table>
+        </div>
       </section>
     </main>
   </div>
@@ -179,6 +248,26 @@
       </div>
     </form>
   </dialog>
+
+  <dialog id="rejectReceivedStockDialog" class="inventory-dialog">
+    <form class="form" id="rejectReceivedStockForm" method="dialog">
+      <h3>Reject Received Stock</h3>
+
+      <input id="rejectReceivedStockNotificationId" type="hidden" />
+
+      <p id="rejectReceivedStockSummary"></p>
+
+      <label for="rejectReceivedStockReason">Rejection Reason</label>
+      <textarea id="rejectReceivedStockReason" rows="4" placeholder="Explain why the received stock is rejected" required></textarea>
+
+      <div class="dialog-actions">
+        <button type="button" class="secondary-btn" id="cancelRejectReceivedStockBtn">Cancel</button>
+        <button type="submit">Reject Stock</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div id="inventoryToastStack" class="inventory-toast-stack" aria-live="polite"></div>
 
   <script src="Inventory.js"></script>
 </body>
