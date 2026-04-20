@@ -1,7 +1,7 @@
-package project.hotel.Repository;
+package project.flametreehotel.Repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-import project.hotel.Model.inventory;
+import project.flametreehotel.Model.inventory;
 
 import java.util.Optional;
 

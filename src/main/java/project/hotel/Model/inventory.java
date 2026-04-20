@@ -1,4 +1,4 @@
-package project.hotel.Model;
+package project.flametreehotel.Model;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

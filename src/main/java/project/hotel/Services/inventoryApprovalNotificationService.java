@@ -1,4 +1,4 @@
-package project.hotel.Services;
+package project.flametreehotel.Services;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -6,9 +6,9 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;
-import project.hotel.Model.inventory;
-import project.hotel.Model.inventoryApprovalNotification;
-import project.hotel.Repository.inventoryApprovalNotificationRepository;
+import project.flametreehotel.Model.inventory;
+import project.flametreehotel.Model.inventoryApprovalNotification;
+import project.flametreehotel.Repository.inventoryApprovalNotificationRepository;
 
 @Service
 @RequiredArgsConstructor

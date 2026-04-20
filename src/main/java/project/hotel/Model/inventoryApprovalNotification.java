@@ -1,4 +1,4 @@
-package project.hotel.Model;
+package project.flametreehotel.Model;
 
 import java.time.LocalDateTime;
 

@@ -1,11 +1,11 @@
-package project.hotel.Repository;
+package project.flametreehotel.Repository;
 
 import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import project.hotel.Model.inventoryApprovalNotification;
+import project.flametreehotel.Model.inventoryApprovalNotification;
 
 public interface inventoryApprovalNotificationRepository extends JpaRepository<inventoryApprovalNotification, Integer> {
     List<inventoryApprovalNotification> findByNotificationStatusOrderByApprovedAtDesc(String notificationStatus);
