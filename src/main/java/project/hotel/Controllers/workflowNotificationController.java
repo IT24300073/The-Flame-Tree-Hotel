@@ -15,9 +15,9 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import lombok.RequiredArgsConstructor;
-import project.flametreehotel.Model.workflowNotification;
-import project.flametreehotel.Services.workflowNotificationService;
-import project.flametreehotel.Services.workflowRealtimeService;
+import project.hotel.Model.workflowNotification;
+import project.hotel.Services.workflowNotificationService;
+import project.hotel.Services.workflowRealtimeService;
 
 @RestController
 @RequestMapping("/workflow")
