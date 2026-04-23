@@ -1,13 +1,13 @@
 :root {
-  --bg-dark: #141218;
-  --bg-accent: #2b2233;
+  --bg-dark: #f6f1e8;
+  --bg-accent: #ece2d4;
   --tone-amber: #e472b8;
   --tone-gold: #c892ff;
-  --tone-cream: #f2eaf9;
-  --text-main: #f3edf8;
-  --text-muted: #b9adc7;
-  --stroke: rgba(255, 255, 255, 0.12);
-  --shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+  --tone-cream: #3b2c4f;
+  --text-main: #2f2419;
+  --text-muted: #6f624f;
+  --stroke: rgba(92, 73, 45, 0.2);
+  --shadow: 0 18px 46px rgba(83, 63, 36, 0.16);
   --radius: 16px;
 }
 
@@ -22,7 +22,7 @@ body {
   color: var(--text-main);
   background: radial-gradient(circle at 20% 20%, rgba(228, 114, 184, 0.2), transparent 40%),
     radial-gradient(circle at 80% 10%, rgba(200, 146, 255, 0.18), transparent 35%),
-    linear-gradient(135deg, #121015, #211b29 45%, #121015 90%);
+    linear-gradient(145deg, #f9f5ee, #f2eadf 48%, #f8f3eb 100%);
   padding: 28px 18px;
   overflow-x: hidden;
   overflow-y: auto;
@@ -79,7 +79,7 @@ h1 {
 }
 
 .panel {
-  background: rgba(20, 18, 24, 0.94);
+  background: rgba(255, 252, 246, 0.95);
   border: 1px solid var(--stroke);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
@@ -109,8 +109,8 @@ textarea {
   border: 1px solid var(--stroke);
   border-radius: 10px;
   padding: 10px 12px;
-  background: rgba(255, 255, 255, 0.03);
-  color: var(--tone-cream);
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--text-main);
   font: inherit;
 }
 
@@ -123,14 +123,15 @@ textarea:focus {
 }
 
 option {
-  color: #0e1a1b;
+  color: var(--text-main);
+  background: #fffdfa;
 }
 
 button {
   border: none;
   border-radius: 10px;
   padding: 11px 12px;
-  color: #1a1320;
+  color: #fff9f2;
   font-weight: 800;
   background: linear-gradient(120deg, #e472b8, #c892ff);
   cursor: pointer;
@@ -165,18 +166,18 @@ th {
 }
 
 .tag.done {
-  background: rgba(140, 206, 169, 0.18);
-  color: #9fe0b9;
+  background: rgba(91, 166, 118, 0.22);
+  color: #2f7d4f;
 }
 
 .tag.partial {
-  background: rgba(248, 195, 101, 0.2);
-  color: #ffd68a;
+  background: rgba(248, 195, 101, 0.25);
+  color: #996312;
 }
 
 .tag.pending {
-  background: rgba(255, 122, 61, 0.18);
-  color: #ffb48f;
+  background: rgba(255, 122, 61, 0.24);
+  color: #9d501b;
 }
 
 .summary-grid {
@@ -187,7 +188,7 @@ th {
 }
 
 .summary-card {
-  background: rgba(43, 34, 51, 0.7);
+  background: rgba(255, 255, 255, 0.72);
   border: 1px solid var(--stroke);
   border-radius: 12px;
   padding: 16px;
@@ -237,10 +238,111 @@ th {
   font-weight: 600;
 }
 
-#lowStockNotificationBadge {
+.supplier-alert-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.supplier-alert-note {
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--text-muted);
+}
+
+.supplier-alert-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.supplier-alert-badge-wrap {
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+#supplierApprovalBadge {
+  color: #e472b8;
+  background: rgba(228, 114, 184, 0.16);
+  border: 1px solid rgba(228, 114, 184, 0.38);
+  border-radius: 999px;
+  padding: 2px 10px;
+}
+
+.clear-alerts-btn {
+  padding: 6px 10px;
+  font-size: 0.78rem;
+  border-radius: 8px;
+}
+
+.supplier-alert-feed {
+  margin: 0 0 14px;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 8px;
+}
+
+.supplier-alert-feed li {
+  border: 1px solid var(--stroke);
+  background: rgba(255, 255, 255, 0.72);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 0.88rem;
+  color: var(--text-main);
+}
+
+.supplier-toast-stack {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 120;
+  width: min(360px, calc(100vw - 24px));
+  display: grid;
+  gap: 10px;
+  pointer-events: none;
+}
+
+.supplier-toast {
+  border: 1px solid rgba(228, 114, 184, 0.38);
+  border-radius: 12px;
+  padding: 12px;
+  background: rgba(255, 251, 245, 0.98);
+  box-shadow: 0 14px 30px rgba(74, 50, 27, 0.22);
+  animation: supplier-toast-in 0.22s ease-out;
+}
+
+.supplier-toast strong {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 0.86rem;
   color: var(--tone-cream);
-  background: rgba(228, 114, 184, 0.2);
-  border: 1px solid rgba(228, 114, 184, 0.45);
+}
+
+.supplier-toast p {
+  margin: 0;
+  font-size: 0.84rem;
+  color: var(--text-main);
+}
+
+@keyframes supplier-toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+#lowStockNotificationBadge {
+  color: #e472b8;
+  background: rgba(228, 114, 184, 0.16);
+  border: 1px solid rgba(228, 114, 184, 0.38);
   border-radius: 999px;
   padding: 2px 10px;
 }
@@ -251,9 +353,9 @@ th {
   overflow-y: auto;
   border: 1px solid rgba(228, 114, 184, 0.4);
   border-radius: 20px;
-  background: linear-gradient(135deg, rgba(43, 34, 51, 0.98), rgba(30, 20, 40, 0.98));
-  color: var(--tone-cream);
-  box-shadow: 0 20px 80px rgba(0, 0, 0, 0.5);
+  background: linear-gradient(135deg, rgba(255, 252, 246, 0.96), rgba(255, 249, 242, 0.98));
+  color: var(--text-main);
+  box-shadow: 0 18px 46px rgba(83, 63, 36, 0.16);
   padding: 0;
 }
 
@@ -268,20 +370,22 @@ th {
 .po-dialog h3 {
   margin-top: 0;
   margin-bottom: 20px;
-  color: var(--tone-cream);
+  color: var(--text-main);
   font-size: 1.1rem;
 }
 
 .po-dialog input,
 .po-dialog select {
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(228, 114, 184, 0.3);
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid var(--stroke);
+  color: var(--text-main);
 }
 
 .po-dialog input:focus,
 .po-dialog select:focus {
-  background: rgba(255, 255, 255, 0.12);
-  border-color: rgba(228, 114, 184, 0.6);
+  background: rgba(255, 255, 255, 0.96);
+  border-color: rgba(228, 114, 184, 0.65);
+  box-shadow: 0 0 0 3px rgba(228, 114, 184, 0.16);
 }
 
 .dialog-actions {
@@ -295,9 +399,9 @@ th {
 }
 
 .secondary-btn {
-  background: rgba(200, 146, 255, 0.2) !important;
-  color: var(--tone-gold) !important;
-  border: 1px solid rgba(200, 146, 255, 0.4);
+  background: rgba(200, 146, 255, 0.12) !important;
+  color: #c892ff !important;
+  border: 1px solid rgba(200, 146, 255, 0.36);
 }
 
 .secondary-btn:hover {
@@ -336,8 +440,8 @@ th {
   margin-top: 12px;
   padding: 12px;
   border-radius: 8px;
-  background: rgba(228, 114, 184, 0.1);
-  color: var(--tone-cream);
+  background: rgba(228, 114, 184, 0.12);
+  color: #8d58cf;
   display: none;
 }
 
@@ -352,5 +456,15 @@ th {
 
   .summary-grid {
     grid-template-columns: repeat(2, 1fr);
+  }
+
+  .supplier-alert-head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .supplier-alert-actions {
+    width: 100%;
+    justify-content: space-between;
   }
 }

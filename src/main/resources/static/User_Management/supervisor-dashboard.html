@@ -10,21 +10,30 @@
   <link rel="stylesheet" href="supervisor-dashboard.css" />
 </head>
 <body>
+  <div class="toast-container" id="toastContainer">
+    <div class="toast-message" id="taskActionMessage" aria-live="polite"></div>
+  </div>
+
   <div class="shell">
-    <aside class="sidebar">
+    <header class="top-header">
       <div class="brand-block">
         <p class="eyebrow">Supervisor Console</p>
         <h1>The Flame Tree Estate Hotel</h1>
         <p class="subtext">Unified control panel for Guest Service, Housekeeping, and Maintenance.</p>
       </div>
 
-      <nav class="side-nav" aria-label="Supervisor navigation">
-        <a href="#overview">Overview</a>
-        <a href="#unified-panel">Unified Task Panel</a>
-      </nav>
-
-      <a class="back-link" href="index.html">Logout</a>
-    </aside>
+      <div class="header-actions">
+        <nav class="top-nav" aria-label="Supervisor navigation">
+          <a href="#overview">Overview</a>
+          <a href="#unified-panel">Task Panel</a>
+          <a href="#inventory-usage-panel">Inventory</a>
+        </nav>
+        <a class="btn-logout" href="index.html">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+          Logout
+        </a>
+      </div>
+    </header>
 
     <main class="content">
       <section class="panel" id="overview">
@@ -36,6 +45,14 @@
           <article class="kpi"><h3>Approved</h3><p id="approvedMetric">0</p></article>
           <article class="kpi"><h3>Rejected</h3><p id="rejectedMetric">0</p></article>
         </div>
+      </section>
+
+      <section class="panel">
+        <div class="notification-header">
+          <h2>Live Notifications</h2>
+          <button type="button" id="clearNotificationsBtn" class="clear-notifications-btn">Clear Notifications</button>
+        </div>
+        <ul id="notificationList" class="notification-list"></ul>
       </section>
 
       <section class="panel" id="unified-panel">
@@ -109,7 +126,22 @@
             <tbody id="approvalTaskTableBody"></tbody>
           </table>
         </div>
-        <p id="taskActionMessage" aria-live="polite"></p>
+
+        <div class="panel-sub" id="inventory-usage-panel">
+          <h3>Inventory Usage</h3>
+          <p class="subtext">Track who used which inventory item and when it was logged by housekeeping.</p>
+          <table class="user-table">
+            <thead>
+              <tr>
+                <th>Used At</th>
+                <th>Inventory Item</th>
+                <th>Housekeeping Staff</th>
+                <th>Used Qty</th>
+              </tr>
+            </thead>
+            <tbody id="inventoryUsageTableBody"></tbody>
+          </table>
+        </div>
       </section>
 
     </main>

@@ -1,12 +1,15 @@
-const currentRole = localStorage.getItem('currentUserRole') || 'supervisor';
+const currentRole = localStorage.getItem('currentUserRole') || 'Staff Supervisor';
 
 const state = {
   rows: [],
+  usageRows: [],
   assignmentStaff: {
     housekeeping: [],
     maintenance: [],
   },
 };
+
+let supervisorEventSource = null;
 
 function setMetric(id, value) {
   const el = document.getElementById(id);
@@ -28,11 +31,109 @@ function normalize(value) {
   return String(value ?? '').trim().toLowerCase();
 }
 
+let toastTimeout;
 function showMessage(id, message) {
   const el = document.getElementById(id);
   if (el) {
     el.textContent = message;
+    el.classList.add('show');
+    clearTimeout(toastTimeout);
+    toastTimeout = setTimeout(() => {
+      el.classList.remove('show');
+      setTimeout(() => {
+        if (!el.classList.contains('show')) {
+          el.textContent = '';
+        }
+      }, 400); // Wait for transition
+    }, 4000); // Display time
   }
+}
+
+async function loadNotifications() {
+  try {
+    const res = await fetch('/workflow/notifications?audience=SUPERVISOR');
+    if (!res.ok) {
+      throw new Error('Failed to load notifications.');
+    }
+    const notifications = await res.json();
+    renderNotifications(notifications);
+  } catch {
+    renderNotifications([]);
+  }
+}
+
+function renderNotifications(notifications) {
+  const list = document.getElementById('notificationList');
+  if (!(list instanceof HTMLElement)) {
+    return;
+  }
+
+  const rows = Array.isArray(notifications) ? notifications : [];
+  if (!rows.length) {
+    list.innerHTML = '<li class="notification-item"><strong>No notifications yet.</strong><p>Workflow updates will appear here in real time.</p></li>';
+    return;
+  }
+
+  list.innerHTML = rows.slice(0, 12).map((item) => `
+    <li class="notification-item">
+      <strong>${escapeHtml(item.title || 'Update')}</strong>
+      <p>${escapeHtml(item.message || '')}</p>
+    </li>
+  `).join('');
+}
+
+function prependNotification(item) {
+  const list = document.getElementById('notificationList');
+  if (!(list instanceof HTMLElement)) {
+    return;
+  }
+
+  const first = list.firstElementChild;
+  const isEmpty = first && first.textContent && first.textContent.includes('No notifications yet.');
+  if (isEmpty) {
+    list.innerHTML = '';
+  }
+
+  const row = document.createElement('li');
+  row.className = 'notification-item';
+  row.innerHTML = `
+    <strong>${escapeHtml(item?.title || 'Update')}</strong>
+    <p>${escapeHtml(item?.message || '')}</p>
+  `;
+  list.prepend(row);
+
+  while (list.children.length > 12) {
+    list.removeChild(list.lastElementChild);
+  }
+}
+
+function initRealtime() {
+  if (supervisorEventSource) {
+    supervisorEventSource.close();
+  }
+
+  supervisorEventSource = new EventSource('/workflow/stream?audience=SUPERVISOR');
+
+  supervisorEventSource.addEventListener('notification', (event) => {
+    try {
+      const payload = JSON.parse(event.data);
+      prependNotification(payload);
+      loadUnifiedData();
+    } catch {
+      // Ignore malformed event payload.
+    }
+  });
+
+  supervisorEventSource.addEventListener('data-change', () => {
+    loadUnifiedData();
+  });
+
+  supervisorEventSource.onerror = () => {
+    if (supervisorEventSource) {
+      supervisorEventSource.close();
+    }
+    setTimeout(initRealtime, 2000);
+  };
 }
 
 async function apiPost(url, body) {
@@ -46,9 +147,10 @@ async function apiPost(url, body) {
 
 async function loadUnifiedData() {
   try {
-    const [panelRes, usersRes] = await Promise.all([
+    const [panelRes, usersRes, usageRes] = await Promise.all([
       fetch('/guestservice/supervisor/unified'),
       fetch('/auth/users'),
+      fetch('/housekeeping/inventory-usage/list'),
     ]);
 
     if (!panelRes.ok) {
@@ -62,6 +164,7 @@ async function loadUnifiedData() {
 
     const users = usersRes.ok ? await usersRes.json() : [];
     hydrateAssignmentStaff(users);
+    state.usageRows = usageRes.ok ? await usageRes.json() : [];
 
     state.rows = [...guest, ...housekeeping, ...maintenance];
     renderMetrics(state.rows);
@@ -147,6 +250,11 @@ function renderMetrics(rows) {
   setMetric('rejectedMetric', rejected);
 }
 
+function isUnassignedGuestRequest(row) {
+  const assignedTo = normalize(row?.assignedTo);
+  return !assignedTo || assignedTo === 'unassigned';
+}
+
 function assignmentFilteredRows() {
   const view = document.getElementById('viewFilter')?.value || 'guest-pending';
   const department = document.getElementById('departmentFilter')?.value || 'all';
@@ -154,6 +262,10 @@ function assignmentFilteredRows() {
 
   return state.rows.filter((row) => {
     if (row.source !== 'GUEST') {
+      return false;
+    }
+
+    if (!isUnassignedGuestRequest(row)) {
       return false;
     }
 
@@ -188,6 +300,36 @@ function approvalRows() {
 function renderTaskQueues() {
   renderAssignmentTable();
   renderApprovalTable();
+  renderInventoryUsageTable();
+}
+
+function formatDateTime(value) {
+  if (!value) return '-';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '-';
+  return date.toLocaleString();
+}
+
+function renderInventoryUsageTable() {
+  const body = document.getElementById('inventoryUsageTableBody');
+  if (!body) {
+    return;
+  }
+
+  const rows = Array.isArray(state.usageRows) ? state.usageRows : [];
+  if (!rows.length) {
+    body.innerHTML = '<tr><td colspan="4">No inventory usage logs yet.</td></tr>';
+    return;
+  }
+
+  body.innerHTML = rows.map((row) => `
+    <tr>
+      <td>${escapeHtml(formatDateTime(row.usedAt))}</td>
+      <td>${escapeHtml(row.itemName)}</td>
+      <td>${escapeHtml(row.staffName)}</td>
+      <td>${Number(row.usedQty || 0)}</td>
+    </tr>
+  `).join('');
 }
 
 function renderAssignmentTable() {
@@ -345,9 +487,12 @@ async function submitSupervisorDecision(source, id, decision) {
 }
 
 function attachListeners() {
+  document.getElementById('clearNotificationsBtn')?.addEventListener('click', clearNotifications);
+
   document.getElementById('refreshButton')?.addEventListener('click', (event) => {
     event.preventDefault();
-    window.location.reload();
+    loadUnifiedData();
+    loadNotifications();
   });
   document.getElementById('viewFilter')?.addEventListener('change', renderTaskQueues);
   document.getElementById('departmentFilter')?.addEventListener('change', renderTaskQueues);
@@ -413,5 +558,38 @@ function attachListeners() {
   });
 }
 
+async function clearNotifications() {
+  try {
+    const res = await fetch('/workflow/notifications/clear', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ audience: 'SUPERVISOR' }),
+    });
+    let data = {};
+    const raw = await res.text();
+    if (raw) {
+      try {
+        data = JSON.parse(raw);
+      } catch {
+        data = { message: 'Unexpected server response while clearing notifications.' };
+      }
+    }
+
+    if (!res.ok || data.success === false) {
+      throw new Error(data.message || 'Failed to clear notifications.');
+    }
+
+    renderNotifications([]);
+    showMessage('taskActionMessage', 'Notifications cleared.');
+  } catch (error) {
+    const reason = error?.message === 'Failed to fetch'
+      ? 'Cannot reach server. Open this page from http://localhost:8080 and make sure backend is running.'
+      : (error.message || 'Failed to clear notifications.');
+    showMessage('taskActionMessage', reason);
+  }
+}
+
 attachListeners();
 loadUnifiedData();
+loadNotifications();
+initRealtime();

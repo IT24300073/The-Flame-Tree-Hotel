@@ -28,6 +28,7 @@ const updateAssignedToInput = document.getElementById('updateAssignedTo');
 const updateStatusInput = document.getElementById('updateStatus');
 
 let maintenanceStaffOptions = [];
+let maintenanceEventSource = null;
 
 function statusClass(status) {
   if (status === 'Pending') return 'open';
@@ -89,6 +90,124 @@ function renderAll(tickets) {
 
 function showMessage(message) {
   maintenanceMessage.textContent = message;
+}
+
+async function clearNotifications() {
+  try {
+    const res = await fetch('/workflow/notifications/clear', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ audience: 'MAINTENANCE' }),
+    });
+    let data = {};
+    const raw = await res.text();
+    if (raw) {
+      try {
+        data = JSON.parse(raw);
+      } catch {
+        data = { message: 'Unexpected server response while clearing notifications.' };
+      }
+    }
+
+    if (!res.ok || data.success === false) {
+      throw new Error(data.message || 'Failed to clear notifications.');
+    }
+
+    renderNotifications([]);
+    showMessage('Notifications cleared.');
+  } catch (error) {
+    const reason = error?.message === 'Failed to fetch'
+      ? 'Cannot reach server. Open this page from http://localhost:8080 and make sure backend is running.'
+      : (error.message || 'Failed to clear notifications.');
+    showMessage(reason);
+  }
+}
+
+async function loadNotifications() {
+  try {
+    const res = await fetch('/workflow/notifications?audience=MAINTENANCE');
+    if (!res.ok) {
+      throw new Error('Failed to load notifications.');
+    }
+    const notifications = await res.json();
+    renderNotifications(notifications);
+  } catch {
+    renderNotifications([]);
+  }
+}
+
+function renderNotifications(notifications) {
+  const list = document.getElementById('notificationList');
+  if (!(list instanceof HTMLElement)) {
+    return;
+  }
+
+  const rows = Array.isArray(notifications) ? notifications : [];
+  if (!rows.length) {
+    list.innerHTML = '<li class="notification-item"><strong>No notifications yet.</strong><p>Workflow updates will appear here in real time.</p></li>';
+    return;
+  }
+
+  list.innerHTML = rows.slice(0, 12).map((item) => `
+    <li class="notification-item">
+      <strong>${escapeHtml(item.title || 'Update')}</strong>
+      <p>${escapeHtml(item.message || '')}</p>
+    </li>
+  `).join('');
+}
+
+function prependNotification(item) {
+  const list = document.getElementById('notificationList');
+  if (!(list instanceof HTMLElement)) {
+    return;
+  }
+
+  const first = list.firstElementChild;
+  const isEmpty = first && first.textContent && first.textContent.includes('No notifications yet.');
+  if (isEmpty) {
+    list.innerHTML = '';
+  }
+
+  const row = document.createElement('li');
+  row.className = 'notification-item';
+  row.innerHTML = `
+    <strong>${escapeHtml(item?.title || 'Update')}</strong>
+    <p>${escapeHtml(item?.message || '')}</p>
+  `;
+  list.prepend(row);
+
+  while (list.children.length > 12) {
+    list.removeChild(list.lastElementChild);
+  }
+}
+
+function initRealtime() {
+  if (maintenanceEventSource) {
+    maintenanceEventSource.close();
+  }
+
+  maintenanceEventSource = new EventSource('/workflow/stream?audience=MAINTENANCE');
+
+  maintenanceEventSource.addEventListener('notification', (event) => {
+    try {
+      const payload = JSON.parse(event.data);
+      prependNotification(payload);
+      loadAndRender();
+    } catch {
+      // Ignore malformed event payload.
+    }
+  });
+
+  maintenanceEventSource.addEventListener('data-change', () => {
+    loadAndRender();
+  });
+
+  maintenanceEventSource.onerror = () => {
+    if (maintenanceEventSource) {
+      maintenanceEventSource.close();
+    }
+    setTimeout(initRealtime, 2000);
+  };
 }
 
 function normalizeRole(value) {
@@ -369,3 +488,6 @@ maintenanceTableBody.addEventListener('click', async (event) => {
 
 loadMaintenanceStaffOptions();
 loadAndRender();
+loadNotifications();
+initRealtime();
+document.getElementById('clearNotificationsBtn')?.addEventListener('click', clearNotifications);
