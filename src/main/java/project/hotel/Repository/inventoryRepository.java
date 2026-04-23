@@ -4,7 +4,7 @@ import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import project.flametreehotel.Model.inventory;
+import project.hotel.Model.inventory;
 
 public interface inventoryRepository extends JpaRepository<inventory, Integer> {
     Optional<inventory> findByItem(String item);

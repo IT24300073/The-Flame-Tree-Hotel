@@ -6,8 +6,8 @@ import java.util.Objects;
 import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;
-import project.flametreehotel.Model.inventory;
-import project.flametreehotel.Repository.inventoryRepository;
+import project.hotel.Model.inventory;
+import project.hotel.Repository.inventoryRepository;
 
 @Service
 @RequiredArgsConstructor
