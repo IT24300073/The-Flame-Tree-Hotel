@@ -1119,6 +1119,37 @@ updateItemForm.addEventListener('submit', async (event) => {
     return;
   }
 
+  const previousItemIndex = inventoryItemsCache.findIndex((item) => Number(item?.id) === id);
+  const previousItem = previousItemIndex >= 0 ? { ...inventoryItemsCache[previousItemIndex] } : null;
+
+  const optimisticItem = {
+    ...previousItem,
+    ...payload,
+    status: (() => {
+      const usableStock = Math.max(0, payload.inStock - payload.damaged - payload.missing);
+      const lowStockThreshold = Math.max(0, payload.minLevel) + 10;
+
+      if (usableStock <= lowStockThreshold) {
+        return 'Low Stock';
+      }
+      if (payload.damaged > 0 || payload.missing > 0) {
+        return 'Monitor';
+      }
+      return 'Healthy';
+    })()
+  };
+
+  if (previousItemIndex >= 0) {
+    inventoryItemsCache[previousItemIndex] = optimisticItem;
+  } else {
+    inventoryItemsCache.push(optimisticItem);
+  }
+
+  renderAll(inventoryItemsCache);
+  updateItemForm.reset();
+  updateItemDialog.close();
+  showMessage('Saving changes...');
+
   try {
     const submitBtn = updateItemForm.querySelector('button[type="submit"]');
     if (submitBtn) {
@@ -1138,6 +1169,11 @@ updateItemForm.addEventListener('submit', async (event) => {
       if (errorMessage.includes('Damaged and missing totals cannot exceed the stock level.')) {
         showPopup(errorMessage);
       }
+
+      if (previousItemIndex >= 0 && previousItem) {
+        inventoryItemsCache[previousItemIndex] = previousItem;
+      }
+      renderAll(inventoryItemsCache);
       return;
     }
 
@@ -1152,11 +1188,13 @@ updateItemForm.addEventListener('submit', async (event) => {
       renderAll(inventoryItemsCache);
     }
 
-    updateItemForm.reset();
-    updateItemDialog.close();
     showMessage(data.message || 'Item updated.');
     broadcastInventoryUpdate();
   } catch {
+    if (previousItemIndex >= 0 && previousItem) {
+      inventoryItemsCache[previousItemIndex] = previousItem;
+    }
+    renderAll(inventoryItemsCache);
     showMessage('Error updating item.');
   } finally {
     const submitBtn = updateItemForm.querySelector('button[type="submit"]');
